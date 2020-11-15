@@ -1,0 +1,29 @@
+{
+  "name": "globallypaid/php-sdk",
+  "description": "GloballyPaid Sdk implementation in PHP",
+  "keywords": [
+    "globallypaid.com",
+    "globallypaid",
+    "phpsdk",
+    "payment",
+    "paymentgateway",
+    "pay"
+  ],
+  "homepage": "https://docs.globallypaid.com/",
+  "license": "MIT",
+  "authors": [
+    {
+      "name": "GloballyPaid",
+      "homepage": "https://globallypaid.com/"
+    }
+  ],
+  "require": {
+    "php": ">=5.6.0",
+    "ext-curl": "*",
+    "ext-json": "*",
+    "ext-mbstring": "*"
+  },
+  "autoload": {
+        "files": ["src/GloballyPaidSDK.php"]
+  }
+}
