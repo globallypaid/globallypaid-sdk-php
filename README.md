@@ -41,10 +41,9 @@ If you use Composer, these dependencies should be handled automatically. If you 
 Simple configuration looks like:
 
 ```php
-$config['BaseURL']            = 'BaseURL';
-$config['ApiKey']             = 'YourApiKeyHere';
-$config['SharedSecretAPIKey'] = 'YourSharedSecretAPIKeyHere';
-$config['AppKey']             = 'YourAppKeyHere';
+$config['ApiKey']              = 'ApiKey_here';
+$config['SharedSecretAPIKey']  = 'SharedSecretAPIKey_here';
+$config['AppKey']              = 'AppKey_here';
 ```
 
 Example: initialize the Client

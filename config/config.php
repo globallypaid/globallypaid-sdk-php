@@ -1,7 +1,7 @@
 <?php
    
 //required config              
-$config['ApiKey']              = 'ApiKey_here';   //sandbox key
+$config['ApiKey']              = 'ApiKey_here';
 $config['SharedSecretAPIKey']  = 'SharedSecretAPIKey_here';
 $config['AppKey']              = 'AppKey_here';
 
