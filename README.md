@@ -78,6 +78,10 @@ Please see the [PHP API docs](https://sandbox.docs.globallypaid.com/) for the mo
 
 You can also refer to the [GloballyPaid developers page](https://globallypaid.com/developers/).
 
+### Example
+
+For a working example of usage, please visit [Globally Paid PHP SDK example](https://github.com/globallypaid/globallypaid-sdk-php-samples).
+
 ## Initialize the Client
 
 ```php
