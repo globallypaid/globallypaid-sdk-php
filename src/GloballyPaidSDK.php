@@ -22,12 +22,13 @@ class GloballyPaid
     function __construct($config = [])
     {
         self::$config = $config;
-        $this->BaseURL = isset($config['Sendbox']) && $config['Sendbox'] ? 'https://sandbox.transactions.globallypaid.com' : 'https://transactions.globallypaid.com';
+        $this->sandbox = isset($config['Sandbox']) && $config['Sandbox'] ? true : false;
+        $this->BaseURL = $this->sandbox ? 'https://qa.transactions.globallypaid.com' : 'https://transactions.globallypaid.com';
         $this->BaseTokenUrl = $this->BaseURL;
-        $this->env_sharedSecretAPIKey = isset($config['SharedSecretAPIKey']) ? $config['SharedSecretAPIKey'] : false;
-        $this->env_appIdKey = isset($config['AppKey']) ? $config['AppKey'] : false;
+        $this->env_sharedSecretAPIKey = isset($config['SharedSecret']) ? $config['SharedSecret'] : 'SharedSecret';
+        $this->env_appIdKey = isset($config['AppId']) ? $config['AppId'] : 'AppId';
         $this->KountSessionId = isset($config['KountSessionId']) ? $config['KountSessionId'] : rand(10000, 999999999);
-        $this->ApiKey = isset($config['ApiKey']) ? $config['ApiKey'] : false;
+        $this->ApiKey = isset($config['PublishableApiKey']) ? $config['PublishableApiKey'] : 'PublishableApiKey';
         $this->version = isset($config['ApiVersion']) ? $config['ApiVersion'] : 'v1';
         $this->ContentType = 'application/json';
         $this->requestTimeoutSeconds = isset($config['RequestTimeout']) ? (int) $config['RequestTimeout'] : 30;
@@ -57,9 +58,6 @@ class GloballyPaid
             '500' => 'Internal Server Error -- We had a problem with our server. Try again later.',
             '503' => 'Service Unavailable -- We\'re temporarily offline for maintenance. Please try again later'
         ];
-        if (!isset($config['SharedSecretAPIKey']) || !isset($config['AppKey']) || !isset($config['ApiKey'])) {
-            return false;
-        }
         spl_autoload_register(function ($class_name) {
             require_once $class_name . '.php';
         });
@@ -118,6 +116,23 @@ class GloballyPaid
             return false;
         }
         return (object) $response;
+    }
+
+    /**
+     * Set dynamic config
+     * 
+     * @return void
+     */
+    public function setConfig($config = [])
+    {
+        $this->sandbox = isset($config['Sandbox']) && $config['Sandbox'] ? true : false;
+        $this->BaseURL = $this->sandbox ? 'https://sandbox.transactions.globallypaid.com' : 'https://transactions.globallypaid.com';
+        $this->BaseTokenUrl = $this->BaseURL;
+        $this->env_sharedSecretAPIKey = isset($config['SharedSecret']) ? $config['SharedSecret'] : 'SharedSecret';
+        $this->env_appIdKey = isset($config['AppId']) ? $config['AppId'] : 'AppId';
+        $this->ApiKey = isset($config['PublishableApiKey']) ? $config['PublishableApiKey'] : 'PublishableApiKey';
+        $this->version = isset($config['ApiVersion']) ? $config['ApiVersion'] : 'v1';
+        $this->requestTimeoutSeconds = isset($config['RequestTimeout']) ? (int) $config['RequestTimeout'] : 30;
     }
 
     /**
@@ -270,7 +285,7 @@ class GloballyPaid
      * 
      * @return string Return generated HMAC needed for header of transaction requests
      */
-    private function generateHmac($data)
+    public function generateHmac($data)
     {
         $guid = md5(uniqid());
         $hashInBase64 = base64_encode(hash_hmac('sha256', @json_encode($data) ? @json_encode($data) : "", base64_decode($this->env_sharedSecretAPIKey), true));

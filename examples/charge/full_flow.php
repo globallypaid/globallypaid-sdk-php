@@ -2,7 +2,18 @@
 require_once '../../config/config.php';
 require_once '../../src/GloballyPaidSDK.php';
 
-$GloballyPaid = new GloballyPaid($config);
+$GloballyPaid = new GloballyPaid();
+
+//set dynamic config
+$GloballyPaid->setConfig([
+    'PublishableApiKey' => 'PublishableApiKey_here',
+    'AppId' => 'AppId_here',
+    'SharedSecret' => 'SharedSecret_here',
+    'Sandbox' => true,
+    'ApiVersion' => 'v1',
+    'RequestTimeout' => 5
+]);
+
 
 //create token
 $token = $GloballyPaid->token->create([

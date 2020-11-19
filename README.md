@@ -41,9 +41,15 @@ If you use Composer, these dependencies should be handled automatically. If you 
 Simple configuration looks like:
 
 ```php
-$config['ApiKey']              = 'ApiKey_here';
-$config['SharedSecretAPIKey']  = 'SharedSecretAPIKey_here';
-$config['AppKey']              = 'AppKey_here';
+//required config
+$config['PublishableApiKey']    = 'PublishableApiKey_here';
+$config['AppId']                = 'AppId_here';
+$config['SharedSecret']         = 'SharedSecret_here';
+$config['Sandbox']              = true;
+
+//optional config
+//$config['ApiVersion']          = 'v1'; //default v1
+//$config['RequestTimeout']      = 10; //default 30
 ```
 
 Example: initialize the Client
@@ -53,6 +59,16 @@ require_once '../../config/config.php';
 require_once '../../src/GloballyPaidSDK.php';
 
 $GloballyPaid = new GloballyPaid($config);
+
+//config can be changed dynamically 
+$GloballyPaid->setConfig([
+    'PublishableApiKey' => 'PublishableApiKey_here',
+    'AppId' => 'AppId_here',
+    'SharedSecret' => 'SharedSecret_here',
+    'Sandbox' => true,
+    'ApiVersion' => 'v1',
+    'RequestTimeout' => 5
+]);
 ```
 
 
