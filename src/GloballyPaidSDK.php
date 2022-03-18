@@ -22,8 +22,8 @@ class GloballyPaid
     function __construct($config = [])
     {
         self::$config = $config;
-        $this->sandbox = isset($config['Sandbox']) && $config['Sandbox'] ? true : false;
-        $this->BaseURL = $this->sandbox ? 'https://qa.transactions.globallypaid.com' : 'https://transactions.globallypaid.com';
+        $this->sandbox = isset($config['Sandbox']) && $config['Sandbox'] === TRUE;
+        $this->BaseURL = $this->sandbox ? 'https://sandbox.api.globallypaid.com' : 'https://api.globallypaid.com';
         $this->BaseTokenUrl = $this->BaseURL;
         $this->env_sharedSecretAPIKey = isset($config['SharedSecret']) ? $config['SharedSecret'] : 'SharedSecret';
         $this->env_appIdKey = isset($config['AppId']) ? $config['AppId'] : 'AppId';
@@ -32,7 +32,7 @@ class GloballyPaid
         $this->version = isset($config['ApiVersion']) ? $config['ApiVersion'] : 'v1';
         $this->ContentType = 'application/json';
         $this->requestTimeoutSeconds = isset($config['RequestTimeout']) ? (int) $config['RequestTimeout'] : 30;
-        $this->UseBaseUrl = 'token';
+        $this->UseBaseUrl = 'payments';
         $this->RequestType = 'post';
         $this->token = null;
         $this->payment_instrument = [];
@@ -85,7 +85,7 @@ class GloballyPaid
         $parts = $this->splitUpperCase($methodName);
         $requestType = $this->RequestType;
 
-        $endPoint = strtolower(implode('/', $parts));
+        $endPoint = strtolower(str_replace('_', '/', implode('-', $parts)));
         $bodyData = isset($arguments[0]) ? $arguments[0] : null;
         $queryString = '';
         $uriSegments = '';
@@ -126,7 +126,7 @@ class GloballyPaid
     public function setConfig($config = [])
     {
         $this->sandbox = isset($config['Sandbox']) && $config['Sandbox'] ? true : false;
-        $this->BaseURL = $this->sandbox ? 'https://sandbox.transactions.globallypaid.com' : 'https://transactions.globallypaid.com';
+        $this->BaseURL = $this->sandbox ? 'https://sandbox.api.globallypaid.com' : 'https://api.globallypaid.com';
         $this->BaseTokenUrl = $this->BaseURL;
         $this->env_sharedSecretAPIKey = isset($config['SharedSecret']) ? $config['SharedSecret'] : 'SharedSecret';
         $this->env_appIdKey = isset($config['AppId']) ? $config['AppId'] : 'AppId';
@@ -143,7 +143,7 @@ class GloballyPaid
     public function setTokenBaseUrl($requestType = 'post')
     {
         $this->RequestType = $requestType;
-        $this->UseBaseUrl = 'token';
+        $this->UseBaseUrl = 'vault';
     }
 
     /**
@@ -154,7 +154,7 @@ class GloballyPaid
     public function setTransactionsBaseUrl($requestType = 'post')
     {
         $this->RequestType = $requestType;
-        $this->UseBaseUrl = 'transactions';
+        $this->UseBaseUrl = 'payments';
     }
 
     /**
@@ -205,27 +205,27 @@ class GloballyPaid
      */
     private function request($endpoint, $data = [], $requestMethod = 'POST')
     {
-        $baseUrl = $this->UseBaseUrl == 'token' ? $this->BaseTokenUrl : $this->BaseURL;
-        $url = $baseUrl . '/api/' . $this->version . '/' . $endpoint;
+        $baseUrl = $this->BaseURL;
+        $url = "{$baseUrl}/api/{$this->version}/{$this->UseBaseUrl}/{$endpoint}";
         $curl = curl_init();
         $headers = [
-            "authorization: Bearer " . $this->ApiKey,
+            "authorization: Basic {base64_encode($this->env_appIdKey . ':' . $this->env_sharedSecretAPIKey)}",
             "content-type: " . $this->ContentType,
             "accept: */*"
         ];
 
-        if ($this->UseBaseUrl != 'token') {
-            if (in_array($requestMethod, ['DELETE'])) {
-                $data = "\"\"";
-                $headers = [];
-                $headers[] = 'hmac: ' . $this->generateHmac("");
-            } else {
-                $headers[] = 'hmac: ' . $this->generateHmac($data);
-            }
-        }
-        if (in_array($requestMethod, ['GET'])) {
-            unset($headers[3]);
-        }
+//         if ($this->UseBaseUrl != 'token') {
+//             if (in_array($requestMethod, ['DELETE'])) {
+//                 $data = "\"\"";
+//                 $headers = [];
+//                 $headers[] = 'hmac: ' . $this->generateHmac("");
+//             } else {
+//                 $headers[] = 'hmac: ' . $this->generateHmac($data);
+//             }
+//         }
+//         if (in_array($requestMethod, ['GET'])) {
+//             unset($headers[3]);
+//         }
 
         $curlOptions = [
             CURLOPT_URL => $url,

@@ -17,8 +17,8 @@ class Paymentinstruments extends GloballyPaid
      */
     public function create($data = [])
     {
-        $this->GloballyPaid->setTransactionsBaseUrl('post');
-        $piCallResponse = $this->GloballyPaid->paymentinstrument($data);
+        $this->GloballyPaid->setTokenBaseUrl('post');
+        $piCallResponse = $this->GloballyPaid->paymentInstrument($data);
         return $piCallResponse;
     }
 
@@ -34,8 +34,8 @@ class Paymentinstruments extends GloballyPaid
     {
         $initialData = (array) $this->get($id);
         $dataForRequest = array_merge($initialData, $data);
-        $this->GloballyPaid->setTransactionsBaseUrl('put');
-        $piCallResponse = $this->GloballyPaid->paymentinstrument($id, $dataForRequest);
+        $this->GloballyPaid->setTokenBaseUrl('put');
+        $piCallResponse = $this->GloballyPaid->paymentInstrument($id, $dataForRequest);
         return $piCallResponse;
     }
 
@@ -49,8 +49,8 @@ class Paymentinstruments extends GloballyPaid
      */
     public function all($params = null, $query = null)
     {
-        $this->GloballyPaid->setTransactionsBaseUrl('get');
-        $piCallResponse = $this->GloballyPaid->paymentinstrumentList($params, $query);
+        $this->GloballyPaid->setTokenBaseUrl('get');
+        $piCallResponse = $this->GloballyPaid->paymentInstrument_list($params, $query);
         return $piCallResponse;
     }
 
@@ -67,8 +67,8 @@ class Paymentinstruments extends GloballyPaid
         if (is_array($id)) {
             return false;
         }
-        $this->GloballyPaid->setTransactionsBaseUrl('get');
-        $piCallResponse = $this->GloballyPaid->paymentinstrument($id, $query);
+        $this->GloballyPaid->setTokenBaseUrl('get');
+        $piCallResponse = $this->GloballyPaid->paymentInstrument($id, $query);
         return $piCallResponse;
     }
 
@@ -92,8 +92,8 @@ class Paymentinstruments extends GloballyPaid
         if (is_array($id)) {
             return false;
         }
-        $this->GloballyPaid->setTransactionsBaseUrl('delete');
-        $piCallResponse = $this->GloballyPaid->paymentinstrument($id);
+        $this->GloballyPaid->setTokenBaseUrl('delete');
+        $piCallResponse = $this->GloballyPaid->paymentInstrument($id);
         return $piCallResponse;
     }
 }
