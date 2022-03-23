@@ -16,15 +16,15 @@
 		}
 	],
 	"require" : {
-		"php" : ">=5.6.0",
-		"ext-curl" : "*",
+		"php" : ">=7.2.0",
 		"ext-json" : "*",
-		"ext-mbstring" : "*"
+		"ext-mbstring" : "*",
+		"guzzlehttp/guzzle" : "^7.4"
 	},
 	"autoload" : {
-		"files" : [
-			"src/GloballyPaidSDK.php"
-		]
+		"psr-4" : {
+			"GloballyPaid\\" : "src/GloballyPaid"
+		}
 	},
 	"support" : {
 		"email" : "engineering@gpgway.com",
