@@ -1,36 +1,69 @@
 <?php 
 /**
- * Copyright © 2022 Global Payroll Gateway, Inc
- 
- * Permission is hereby granted, free of charge, to any person obtaining a copy of
- * this software and associated documentation files (the “Software”), to deal in the
- * Software without restriction, including without limitation the rights to use,
- * copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the
- * Software, and to permit persons to whom the Software is furnished to do so, subject
- * to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included in all copies
- * or substantial portions of the Software.
- 
- * THE SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
- * INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A
- * PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT
- * HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF
- * CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE
- * OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
- *
- * @license MIT
+ * @license https://globallypaid.mit-license.org/ MIT
  * @copyright 2022 Global Payroll Gateway, Inc
  * @filesource
  */
 namespace GloballyPaid\Entities;
 
+/**
+ * Transaction details
+ * 
+ * This object is used to define the `transaction` object passed to the API
+ */
 class TransactionDetails
 {
+    /**
+     * The amount for this transaction.
+     * In whole numbers. 1995 = $19.95 * 100
+     * @var integer
+     */
     public $amount;
+    
+    /**
+     * Captures a charge immediately if set to true
+     * @var boolean
+     */
     public $capture = false;
+    
+    /**
+     * The ISO 3-letter currency code for the charge. e.g. 'USD' or 'CAD'
+     * @var string
+     */
     public $currency_code;
+    
+    /**
+     * Performs an AVS check for a charge
+     * @var boolean
+     */
     public $avs = false;
+    
+    /**
+     * Save's a payment instrument in our vault upon successful charge
+     * 
+     * If using a CardOnFileSource using a tok_ token or using a CreditCardSource
+     * setting this to true will save the card data in our vault permanently
+     * @var boolean
+     */
     public $save_payment_instrument = false;
+    
+    /**
+     * COF type
+     * @var string
+     */
     public $cof_type = 'UNSCHEDULED_CARDHOLDER';
+    
+    /**
+     * Create a new TransactionDetails object
+     * @param integer $amount
+     * @param string $currency_code
+     * @param boolean $capture
+     */
+    public function __construct($amount, $currency_code, $capture = false)
+    {
+        $this->amount = $amount;
+        $this->currency_code = $currency_code;
+        $this->capture = $capture;
+    }
+    
 }

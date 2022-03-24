@@ -4,3 +4,6 @@
 *.lock
 *.phar
 vendor/
+.phive/
+.phpdoc/
+test.php

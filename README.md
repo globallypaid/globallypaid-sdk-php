@@ -4,7 +4,7 @@ The official GloballyPaid PHP client library.
 
 ## Requirements
 
-PHP 5.6.0 and later.
+PHP 7.2.5 and later.
 
 ## Composer
 
@@ -20,17 +20,18 @@ require_once('vendor/autoload.php');
 
 ## Manual Installation
 
-If you do not wish to use Composer, you can download the [latest release](https://github.com/globallypaid/globallypaid-sdk-php/releases). Then, to use the bindings, include the config `config.php` (you can add in your framework or application config file) and main class `GloballyPaidSDK.php` file.
+If you do not wish to use Composer, you can download the [latest release](https://github.com/globallypaid/globallypaid-sdk-php/releases). You will have to manage including all the proper file references starting from `GloballyPaid/GloballyPaid.php`. While this is not terribly difficult, it would be rather tedious. Using a custom autoloader is also an option as the class/file structure adheres to the PSR-4 spec. Just map `GloballyPaid\\` namespace to `/custom/install/globallypaid-sdk-php/src/GloballyPaid`
 
 ```php
-require_once('/path/to/globallypaid-sdk-php/src/GloballyPaidSDK.php');
+require_once('/path/to/globallypaid-sdk-php/src/GloballyPaid/GloballyPaid.php');
 ```
 
 ## Dependencies
 
 The bindings require the following extensions in order to work properly:
 
--   [`curl`](https://secure.php.net/manual/en/book.curl.php), although you can use your own non-cURL client if you prefer
+-	[`guzzlehttp\guzzle`](https://docs.guzzlephp.org/en/stable/index.html)
+-   [`curl`](https://secure.php.net/manual/en/book.curl.php), not required, but recomended
 -   [`json`](https://secure.php.net/manual/en/book.json.php)
 -   [`mbstring`](https://secure.php.net/manual/en/book.mbstring.php) (Multibyte String)
 
@@ -48,28 +49,25 @@ $config['SharedSecret']         = 'SharedSecret_here';
 $config['Sandbox']              = true;
 
 //optional config
-//$config['ApiVersion']          = 'v1'; //default v1
 //$config['RequestTimeout']      = 10; //default 30
 ```
 
 Example: initialize the Client
 
 ```php
-require_once '../../config/config.php';
-require_once '../../src/GloballyPaidSDK.php';
-
 $GloballyPaid = new GloballyPaid($config);
 
-//config can be changed dynamically 
+// config can be changed dynamically 
 $GloballyPaid->setConfig([
-    'PublishableApiKey' => 'PublishableApiKey_here',
-    'AppId' => 'AppId_here',
-    'SharedSecret' => 'SharedSecret_here',
-    'Sandbox' => true,
-    'ApiVersion' => 'v1',
-    'RequestTimeout' => 5
+    'PublishableApiKey'  => 'PublishableApiKey_here',
+    'AppId'              => 'AppId_here',
+    'SharedSecret'       => 'SharedSecret_here',
+    'Sandbox'            => true,
+    'RequestTimeout'     => 5
 ]);
 ```
+
+**NB** This SDK uses magic methods to load classes into a static map of instances. Calling `setConfig` will replace those instances with the new versions using the new config. 
 
 
 # Documentation

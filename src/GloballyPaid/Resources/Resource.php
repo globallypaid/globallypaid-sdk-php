@@ -1,30 +1,13 @@
 <?php 
 /**
- * Copyright © 2022 Global Payroll Gateway, Inc
- 
- * Permission is hereby granted, free of charge, to any person obtaining a copy of
- * this software and associated documentation files (the “Software”), to deal in the
- * Software without restriction, including without limitation the rights to use,
- * copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the
- * Software, and to permit persons to whom the Software is furnished to do so, subject
- * to the following conditions:
  *
- * The above copyright notice and this permission notice shall be included in all copies
- * or substantial portions of the Software.
- 
- * THE SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
- * INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A
- * PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT
- * HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF
- * CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE
- * OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
- *
- * @license MIT
+ * @license https://globallypaid.mit-license.org/ MIT
  * @copyright 2022 Global Payroll Gateway, Inc
  * @filesource
  */
 namespace GloballyPaid\Resources;
-use GuzzleHttp\Client;
+use \GuzzleHttp\Client;
+use GloballyPaid\Entities\ApiResponse;
 
 /**
  * Resource base class
@@ -33,39 +16,58 @@ class Resource
 {
 
     /**
+     * The publishable API key
      * @var string
      */
     protected $publishableApiKey;
 
     /**
+     * The shared secret.
      * @var string
      */
     protected $sharedSecret;
 
     /**
+     * The application ID
      * @var string
      */
     protected $appId;
 
     /**
+     * Determines which host to call
      * @var boolean
      */
     protected $useSandbox;
+    
+    /**
+     * Return associative arrays instead of \stdClass objects from the API
+     * @var boolean
+     */
+    protected $returnArrays = false;
+    
+    /**
+     * Request timeout in seconds
+     * @var integer
+     */
+    protected $timeout = 30;
 
     /**
+     * The hostname
      * @var string
      */
     protected $hostName;
 
     /**
+     * The base path to the API.
+     * Override this property in child classes to set an effective "base" path to use.
      * @var string
      */
     protected $basePath = '/api/v1';
 
     /**
-     * @var Client
+     * @var \GuzzleHttp\Client
      */
-    protected $client;
+    protected static $client = null;
     
     protected function __construct($config)
     {
@@ -74,25 +76,36 @@ class Resource
         $this->appId = isset($config['AppId']) ? $config['AppId'] : '';
         $this->useSandbox = isset($config['Sandbox']) && $config['Sandbox'] === true;
         $this->hostName = ($this->useSandbox ? 'sandbox.' : '') . 'api.globallypaid.com';
+        $this->timeout = (isset($config['RequestTimeout']) && is_numeric($config['RequestTimeout'])) ? 
+            $config['RequestTimeout'] : $this->timeout;
+        $this->returnArrays = (isset($config['ReturnArrays']) && is_bool($config['ReturnArrays'])) ?
+            $config['ReturnArrays'] : $this->returnArrays;
         $base_uri = "https://{$this->hostName}";
-        $base_uri .= (substr($this->basePath, 0, 1) == '/' ? '':'/');
         
-        $this->client = new Client([
-            'base_uri' => $base_uri . $this->basePath,
-            'timeout' => 10,
-            'http_errors' => false,
-            'headers' => [
-                'content-type' => 'application/json',
-                'accept' => 'application/json',
-                'user-agent' => sprintf('globallypaid-php-sdk/2.0;cURL/%s;php/%s', curl_version()['version'], PHP_VERSION),
-                'authorization' => sprintf('Basic %s', base64_encode("{$this->appId}:{$this->sharedSecret}"))
-                
-            ]
-        ]);
+        if (static::$client == null) {
+            echo "New client" . PHP_EOL;
+            static::$client = new Client([
+                'base_uri' => $base_uri,
+                'timeout' => $this->timeout,
+                'http_errors' => false,
+                'headers' => [
+                    'content-type' => 'application/json',
+                    'accept' => 'application/json',
+                    'user-agent' => sprintf('globallypaid-php-sdk/2.0;cURL/%s;php/%s', curl_version()['version'], PHP_VERSION),
+                    'authorization' => sprintf('Basic %s', base64_encode("{$this->appId}:{$this->sharedSecret}"))
+                    
+                ]
+            ]);
+        }
+        
+        if (strlen($this->basePath) > 0 && substr($this->basePath, -1) == '/') {
+            $this->basePath = substr($this->basePath, 0, -1);
+        }
     }
     
     /**
-     * 
+     * One request to rule them all.
+     * This is called from child classes to make requests to the API
      * @param string $method HTTP method (GET|POST|PUT|DELETE)
      * @param string $resource The resource being requested
      * @param array $query
@@ -102,6 +115,17 @@ class Resource
      */
     protected function request($method, $resource, $query = [], $data = null, $headers = [])
     {
+        $path = $this->basePath;
+        if (strlen($resource) > 0) {
+            // if $resource starts with /, treat it as an absolute path
+            if (substr($resource, 0, 1) == '/') {
+                $path = $resource;
+            } else {
+                // append it to $this->basePath
+                $path .= "/{$resource}";
+            }
+        }
+        
         $request = [
             'query' => $query,
             'headers' => $headers
@@ -109,38 +133,26 @@ class Resource
         if (strtoupper($method) != 'GET' && $data != null) {
             $request['body'] = json_encode($data);
         }
-        $apiResponse = new \GloballyPaid\Entities\ApiResponse();
+        $apiResponse = new ApiResponse();
         try {
-            $response = $this->client->request($method, $resource, $request);
+            $response = static::$client->request($method, $path, $request);
             $apiResponse->status = $response->getStatusCode();
             $apiResponse->message = $response->getReasonPhrase();
             $body = (string)$response->getBody();
             if (strlen($body) > 0) {
-                $payload = @json_decode($body);
-                if (json_last_error() != 0) {
-                    $apiResponse->message = 'Error parsing JSON response from API';
-                    $apiResponse->error = json_last_error_msg();
-                    $apiResponse->payload = $body;
+                $payload = json_decode($body, $this->returnArrays);
+                if (json_last_error() == JSON_ERROR_NONE) {
+                    $apiResponse->payload = $payload;
                 } else {
-                    // This is an error response from APIGW, not the app
-                    if (isset($payload->error)) {
-                        $apiResponse->error = $payload->error;
-                        $apiResponse->message = $payload->title;
-                        $apiResponse->trace_id = $payload->trace_id;
-                    } elseif ($apiResponse->status != 200) {
-                        $apiResponse->error = $payload->message;
-                        $apiResponse->trace_id = $payload->id;
-                    } else {
-                        $apiResponse->payload = $payload;
-                    }
+                    $apiResponse->status = 1000 + json_last_error();
+                    $apiResponse->message = 'Error parsing response from API';
                 }
             } else {
                 $apiResponse->payload = null;
             }
         } catch (\Exception $e) {
             $apiResponse->status = -1;
-            $apiResponse->message = 'Unknown Error';
-            $apiResponse->error = $e->getMessage();
+            $apiResponse->message = "Unknown Error: {$e->getMessage()}";
         }
         return $apiResponse;
         

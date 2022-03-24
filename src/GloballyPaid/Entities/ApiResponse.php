@@ -1,6 +1,14 @@
 <?php
+/**
+ * @license https://globallypaid.mit-license.org/ MIT
+ * @copyright 2022 Global Payroll Gateway, Inc
+ * @filesource
+ */
 namespace GloballyPaid\Entities;
 
+/**
+ * The API response object
+ */
 class ApiResponse
 {
     /**
@@ -16,19 +24,11 @@ class ApiResponse
     /**
      * This is the actual payload returned from the GloballyPaid API. Please refer to 
      * the Postman collection you should have received as part of your onboarding package.
-     * If you did not receive one, please reach out to engineering@gpgway.com
-     * @var \stdClass
+     * If you did not receive one, please reach out to engineering@gpgway.com. This will
+     * either be a \stdClass (default) or associative array depending on your config
+     * @var \stdClass|array
      */
     public $payload;
-    /**
-     * If an error occurs, this will be populated with a more detailed error message
-     * @var string
-     */
-    public $error = null;
-    /**
-     * If an error occurs, a unique id for this particular request
-     * @var string
-     */
-    public $trace_id = null;
+    
 }
 

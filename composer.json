@@ -12,7 +12,13 @@
 	"license" : "MIT",
 	"authors" : [{
 			"name" : "GloballyPaid",
-			"homepage" : "https://globallypaid.com/"
+			"homepage" : "https://globallypaid.com/",
+			"email" : "engineering@gpgway.com",
+			"role" : "Owner"
+		}, {
+			"name" : "Randy Sesser",
+			"email" : "rsesser@gpgway.com",
+			"role" : "Developer"
 		}
 	],
 	"require" : {

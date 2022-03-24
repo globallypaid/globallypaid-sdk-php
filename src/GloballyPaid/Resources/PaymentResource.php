@@ -1,25 +1,7 @@
 <?php 
 /**
- * Copyright © 2022 Global Payroll Gateway, Inc
- 
- * Permission is hereby granted, free of charge, to any person obtaining a copy of
- * this software and associated documentation files (the “Software”), to deal in the
- * Software without restriction, including without limitation the rights to use,
- * copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the
- * Software, and to permit persons to whom the Software is furnished to do so, subject
- * to the following conditions:
  *
- * The above copyright notice and this permission notice shall be included in all copies
- * or substantial portions of the Software.
- 
- * THE SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
- * INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A
- * PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT
- * HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF
- * CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE
- * OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
- *
- * @license MIT
+ * @license https://globallypaid.mit-license.org/ MIT
  * @copyright 2022 Global Payroll Gateway, Inc
  * @filesource
  */
@@ -48,11 +30,12 @@ class PaymentResource extends Resource
     }
     
     /**
-     *
+     * Create a charge transaction with the option to capture immediately
      * @param PaymentSource $paymentSource
      * @param TransactionDetails $transactionDetails
      * @param MetaDetails $metaDetails
      * @return ApiResponse
+     * @api
      */
     public function charge($paymentSource, $transactionDetails, $metaDetails)
     {
@@ -61,11 +44,14 @@ class PaymentResource extends Resource
     }
     
     /**
+     * Authorize a transaction
      * 
+     * This is the same as calling charge() and setting `capture = false` on the TransactionDetails
      * @param PaymentSource $paymentSource
      * @param TransactionDetails $transactionDetails
      * @param MetaDetails $metaDetails
      * @return ApiResponse
+     * @api
      */
     public function auth($paymentSource, $transactionDetails, $metaDetails) 
     {
@@ -74,10 +60,11 @@ class PaymentResource extends Resource
     }
     
     /**
-     * 
+     * Capture a previously authorized charge transaction
      * @param string $id Transaction ID from a previous auth request or charge request that wasn't captured
      * @param int $amount Amount. 999 = $9.99
      * @return ApiResponse
+     * @api
      */
     public function capture($id, $amount)
     {
@@ -86,11 +73,15 @@ class PaymentResource extends Resource
     }
     
     /**
+     * Refund a transaction
      * 
+     * This is the same as a void in terms of the API. The API will intelligently decide
+     * which is performed on the card based on whether the transaction has settled or not.
      * @param string $id
      * @param int $amount
      * @param string $reason
      * @return ApiResponse
+     * @api
      */
     public function refund($id, $amount, $reason = '')
     {
@@ -99,11 +90,15 @@ class PaymentResource extends Resource
     }
     
     /**
+     * Void a transaction
      * 
+     * This is the same as a refund in terms of the API. The API will intelligently decide
+     * which is performed on the card based on whether the transaction has settled or not.
      * @param string $id
      * @param int $amount
      * @param string $reason
      * @return ApiResponse
+     * @api
      */
     public function void($id, $amount, $reason = '')
     {
