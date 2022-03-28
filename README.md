@@ -4,7 +4,7 @@ The official GloballyPaid PHP client library.
 
 ## Requirements
 
-PHP 5.6.0 and later.
+PHP 7.2.5 and later.
 
 ## Composer
 
@@ -20,17 +20,18 @@ require_once('vendor/autoload.php');
 
 ## Manual Installation
 
-If you do not wish to use Composer, you can download the [latest release](https://github.com/globallypaid/globallypaid-sdk-php/releases). Then, to use the bindings, include the config `config.php` (you can add in your framework or application config file) and main class `GloballyPaidSDK.php` file.
+If you do not wish to use Composer, you can download the [latest release](https://github.com/globallypaid/globallypaid-sdk-php/releases). You will have to manage including all the proper file references starting from `GloballyPaid/GloballyPaid.php`. While this is not terribly difficult, it would be rather tedious. Using a custom autoloader is also an option as the class/file structure adheres to the PSR-4 spec. Just map `GloballyPaid\\` namespace to `/custom/install/globallypaid-sdk-php/src/GloballyPaid`
 
 ```php
-require_once('/path/to/globallypaid-sdk-php/src/GloballyPaidSDK.php');
+require_once('/path/to/globallypaid-sdk-php/src/GloballyPaid/GloballyPaid.php');
 ```
 
 ## Dependencies
 
 The bindings require the following extensions in order to work properly:
 
--   [`curl`](https://secure.php.net/manual/en/book.curl.php), although you can use your own non-cURL client if you prefer
+-	[`guzzlehttp\guzzle`](https://docs.guzzlephp.org/en/stable/index.html)
+-   [`curl`](https://secure.php.net/manual/en/book.curl.php), not required, but recomended
 -   [`json`](https://secure.php.net/manual/en/book.json.php)
 -   [`mbstring`](https://secure.php.net/manual/en/book.mbstring.php) (Multibyte String)
 
@@ -47,29 +48,33 @@ $config['AppId']                = 'AppId_here';
 $config['SharedSecret']         = 'SharedSecret_here';
 $config['Sandbox']              = true;
 
-//optional config
-//$config['ApiVersion']          = 'v1'; //default v1
-//$config['RequestTimeout']      = 10; //default 30
+// optional config
+// $config['RequestTimeout']      = 30; // default 10
+// $config['ReturnArrays']      = true; // default false 
 ```
+
+**NB** ReturnArrays configuration controls how the JSON response is parsed. The default is to return `stdClass` objects. If you prefer to handle associative arrays, set this value to `true`.
+
 
 Example: initialize the Client
 
 ```php
-require_once '../../config/config.php';
-require_once '../../src/GloballyPaidSDK.php';
-
 $GloballyPaid = new GloballyPaid($config);
 
-//config can be changed dynamically 
+// config can be changed dynamically 
 $GloballyPaid->setConfig([
-    'PublishableApiKey' => 'PublishableApiKey_here',
-    'AppId' => 'AppId_here',
-    'SharedSecret' => 'SharedSecret_here',
-    'Sandbox' => true,
-    'ApiVersion' => 'v1',
-    'RequestTimeout' => 5
+    'PublishableApiKey'  => 'PublishableApiKey_here',
+    'AppId'              => 'AppId_here',
+    'SharedSecret'       => 'SharedSecret_here',
+    'Sandbox'            => true,
+    'RequestTimeout'     => 5,
+    'ReturnArrays'       => false
 ]);
 ```
+
+**NB** This SDK uses magic methods to load classes into a static map of instances. Calling `setConfig` will replace those instances with the new versions using the new config. 
+
+
 
 
 # Documentation
@@ -92,16 +97,102 @@ $GloballyPaid = new GloballyPaid($config);
 
 ### Make a Instant Charge Sale Transaction
 
+The `PaymentsResource::charge()` takes three parameters: a PaymentSource, TransactionDetails & MetaDetails.
+
+#### PaymentSource
+There are two types of PaymentSource objects which can be passed to the charge API. 
+
+**CardOnFileSource** - If you are using the GloballyPaid Forms SDK to tokenize credit cards, or you using GloballyPaid's vault to store your customer's credit card data, you will use the CardOnFileSource object.
 ```php
-$charge = $GloballyPaid->charges->create([
-    'amount' => 9.79 * 100, //amount with cents ex. 9.79 USD should be 9.79*100
-    'currency' => 'usd',
-    'source' => 'token_id_here', //check https://github.com/globallypaid/js-sdk-v2-sample/#form-events
-    'metadata' =>
-    [
-        'client_customer_id' => '123456' //your customer id
-    ]
-]);
+$paymentSource = new GloballyPaid\Entities\CardOnFileSource();
+$paymentSource->card_on_file = new GloballyPaid\Entities\CardOnFile($token_id, $cvv);
+// You can also pass billing and shipping details with a payment source.
+// if you do not pass billing details in the payment source, we will use
+// what we collected when the credit card was tokenized the first time.
+$billing_contact = new GloballyPaid\Entities\ContactDetails();
+$billing_contact->first_name = 'Billy';
+$billing_contact->last_name = 'Bobertson';
+$billing_contact->phone = '2135551212';
+
+$address = new GloballyPaid\Entities\Address();
+$address->line_1 = '1234 Any St';
+$address->line_2 = 'Apt 2a';
+$address->city = 'Beverly Hills';
+$address->state = 'CA';
+$address->postal_code = '90210';
+$address->country_code = 'USA';
+
+$billing_contact->address = $address;
+
+// add the billing_contact to the paymentSource
+$paymentSource->billing_contact = $billing_contact;
+
+// $paymentSource->shipping_contact takes the same ContactDetails object
+```
+
+**CreditCardSource** - If you're not using GloballyPaid to store credit card data or tokenizing via the Forms SDK and just want to pass actual credit card data, use the CreditCardSource object.
+```php
+$paymentSource = new GloballyPaid\Entities\CreditCardSource();
+$paymentSource->credit_card = new GloballyPaid\Entities\CreditCard($account_number, $expiration, $cvv);
+
+$billing_contact = new GloballyPaid\Entities\ContactDetails();
+$billing_contact->first_name = 'Billy';
+$billing_contact->last_name = 'Bobertson';
+$billing_contact->phone = '2135551212';
+
+$address = new GloballyPaid\Entities\Address();
+$address->line_1 = '1234 Any St';
+$address->line_2 = 'Apt 2a';
+$address->city = 'Beverly Hills';
+$address->state = 'CA';
+$address->postal_code = '90210';
+$address->country_code = 'USA';
+
+$billing_contact->address = $address;
+
+// add the billing_contact to the paymentSource
+$paymentSource->billing_contact = $billing_contact;
+
+// $paymentSource->shipping_contact takes the same ContactDetails object
+```
+
+#### TransactionDetails
+
+|Property|Description|Default|
+|---|---|---|
+|`$amount`|An integer value of the amount to charge. e.g. if the amount is `$5.95`, pass `595` (5.95 * 100)||
+|`$currency_code`|ISO 3166 3-letter currency code. e.g. `USD` or `CAD`||
+|`$capture`|If you want to capture the charge immediately, set this to true|`false`|
+|`$avs`|If you want to turn on address verification checks, set this to true|`false`|
+|`$save_payment_instrument`|if you use CreditCardSource or a CardOnFile with `tok_` token_id and want to save the payment source in the Globally Paid vault, set to true|`false`|
+|`$cof_type`|This is the COF type. _Needs description_|`UNSCHEDULED_CARDHOLDER`|
+
+```php
+$transactionDetails = new GloballyPaid\Entities\TransactionDetails($amount, $currency_code);
+$transactionDetails->avs = true;
+```
+#### MetaDetails
+This is details about the transaction that can be added for reporting purposes
+|Property|Description|Default|
+|---|---|---|
+|`$client_transaction_id`|Somthing to identify the transaction in your system||
+|`$client_transaction_description`|A brief description of the transaction||
+|`$client_customer_id`|Something to identify the customer in your system||
+|`$client_invoice_id`|Something to identify the invoice of for the transaction||
+
+```php
+$metaDetails = new GloballyPaid\Entities\MetaDetails();
+$metaDetails->client_transaction_id = '43233344';
+$metaDetails->client_invoice_id = 'inv-20220324';
+$metaDetails->client_transaction_description = 'Initiation fees';
+```
+
+```php
+$charge = $GloballyPaid->payments->charge($paymentSource, $transactionDetails, $metaDetails);
+
+if ($charge->status == 200 && $charge->payload->approved == true) {
+    // charge was approved and ready for capture
+}
 ```
 
 ### Make a Charge Sale Transaction With Capture 
@@ -110,27 +201,21 @@ The transaction amount doesn’t reach the merchant account until the funds are 
 
 ```php
 //charge request
-$charge = $GloballyPaid->charges->create([
-    'amount' => 2000,
-    'currency' => 'usd',
-    'source' => 'token_id_here',
-    'capture' => false,
-    'metadata' => ['client_customer_id' => '4445554']
-]);
+$charge = $GloballyPaid->payments->charge($paymentSource, $transactionDetails, $metaDetails);
 
 //capture request
-$capture = $GloballyPaid->charges->capture(
-    $charge->id,
-    $charge->amount
+$capture = $GloballyPaid->payments->capture(
+    $charge->payload->id,
+    $charge->payload->amount
 );
 ```
 
 ### Refund request 
 
 ```php
-$refund = $GloballyPaid->charges->refund(
-    'charge_id_here',
-    20 * 100 // amount
+$refund = $GloballyPaid->payments->refund(
+    $charge->payload->id,
+    $charge->payload->amount // amount
 );
 ```
 
@@ -139,7 +224,7 @@ $refund = $GloballyPaid->charges->refund(
 ### Create customer
 
 ```php
-$newCustomer = $GloballyPaid->customers->create([
+$newCustomer = $GloballyPaid->customer->create([
     'client_customer_id' => 'client_customer_id_here',
     'first_name' => 'John',
     'last_name' => 'Smith',
@@ -159,7 +244,7 @@ $newCustomer = $GloballyPaid->customers->create([
 ### Get all customers
 
 ```php
-$customers = $GloballyPaid->customers->all();
+$customers = $GloballyPaid->customer->list();
 
 foreach($customers as $customer){
     //handle each $customer here
@@ -169,13 +254,13 @@ foreach($customers as $customer){
 ### Get customer by id
 
 ```php
-$existingCustomer = $GloballyPaid->customers->get('customer_id_here');
+$existingCustomer = $GloballyPaid->customer->get('customer_id_here');
 ```
 
 ### Update existing customer
 
 ```php
-$updateExistingCustomer = $GloballyPaid->customers->update('customer_id_here',
+$updateExistingCustomer = $GloballyPaid->customer->update('customer_id_here',
     [
         'first_name' => 'New name',
         'last_name' => 'Smith',
@@ -190,7 +275,7 @@ $updateExistingCustomer = $GloballyPaid->customers->update('customer_id_here',
 ### Delete existing customer
 
 ```php
-$response = $GloballyPaid->customers->delete('customer_id_here');
+$response = $GloballyPaid->customer->delete('customer_id_here');
 ```
 
 #### Similar to customer crud is PaymentInstrument. You can check stand-alone examples to learn how to use.
