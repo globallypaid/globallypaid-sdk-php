@@ -105,16 +105,20 @@ class GloballyPaid
             $uriSegments = '/' . (string) $bodyData;
         }
         $response = $this->request($endPoint . $uriSegments . $queryString, $bodyData, strtoupper($requestType));
-        if (isset($response['response_code']) && $response['response_code'] != '00') {
-            $this->errorResponse = ['errors' => ['other' => [$response['message']]], 'title' => isset($this->errorCodes[$response['response_code']]) ? $this->errorCodes[$response['response_code']] : $response['message'], 'status' => (int) $response['response_code'], 'originalResponse' => json_encode($response)];
-            return false;
-        } else if (isset($response['errors'])) {
-            $this->errorResponse = $response;
-            return false;
-        } else if (isset($response['approved']) && !$response['approved']) {
-            $this->errorResponse = $response;
-            return false;
-        }
+
+        // We shouldn't make logical decisions for clients. Just give them the response from the 
+        // service and let them make thier own decision about how to handle declines/errors
+        // if (isset($response['response_code']) && $response['response_code'] != '00') {
+        //     $this->errorResponse = ['errors' => ['other' => [$response['message']]], 'title' => isset($this->errorCodes[$response['response_code']]) ? $this->errorCodes[$response['response_code']] : $response['message'], 'status' => (int) $response['response_code'], 'originalResponse' => json_encode($response)];
+        //     return false;
+        // } else if (isset($response['errors'])) {
+        //     $this->errorResponse = $response;
+        //     return false;
+        // } else if (isset($response['approved']) && !$response['approved']) {
+        //     $this->errorResponse = $response;
+        //     return false;
+        // }
+
         return (object) $response;
     }
 
@@ -209,10 +213,15 @@ class GloballyPaid
         $url = "{$baseUrl}/api/{$this->version}/{$this->UseBaseUrl}/{$endpoint}";
         $curl = curl_init();
         $headers = [
-            "authorization: Basic {base64_encode($this->env_appIdKey . ':' . $this->env_sharedSecretAPIKey)}",
             "content-type: " . $this->ContentType,
             "accept: */*"
         ];
+
+        if ($this->UseBaseUrl != 'vault') {
+            $headers[] .= "authorization: Basic " . base64_encode($this->env_appIdKey . ':' . $this->env_sharedSecretAPIKey);
+        } else {
+            $headers[] .= "authorization: Bearer " . $this->ApiKey;
+        }
 
 //         if ($this->UseBaseUrl != 'token') {
 //             if (in_array($requestMethod, ['DELETE'])) {
@@ -271,10 +280,14 @@ class GloballyPaid
             if ($statusCode == 200) {
                 $resp = json_decode($response, true);
                 if (is_array($resp) && !$resp) {
+                    echo "You're getting this...";
                     return $resp;
                 }
             }
-            return json_decode($response, true) ? json_decode($response, true) : ['errors' => ['other' => [$responseArray[0]]], 'title' => $this->errorCodes[$statusCode], 'status' => (int) $statusCode, 'originalResponse' => $originalResponse];
+            $decoded = json_decode($response, true);
+            if ($decoded === null)
+                return ['errors' => ['other' => [$responseArray[0]]], 'title' => $this->errorCodes[$statusCode], 'status' => (int) $statusCode, 'originalResponse' => $originalResponse];
+            return $decoded;
         }
     }
 
