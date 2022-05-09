@@ -7,19 +7,9 @@ class Charges extends GloballyPaid
     {
         $this->GloballyPaid = parent::$mainInstance;
         $this->defaultData = [
-            'source' => null,
-            'amount' => null,
-            'capture' => true,
-            'client_customer_id' => '000000',
-            'recurring' => false,
-            'avs' => false,
-            'currency_code' => null,
-            'client_transaction_id' => '000000',
-            'client_transaction_description' => 'No description',
-            'client_invoice_id' => '000000',
-            'user_agent' => isset($_SERVER['HTTP_USER_AGENT']) ? $_SERVER['HTTP_USER_AGENT'] : null,
-            'browser_header' => null,
-            'save_payment_instrument' => false
+            'source' => [],
+            'transaction' => [],
+            'meta' => []
         ];
     }
 
@@ -32,14 +22,14 @@ class Charges extends GloballyPaid
      */
     public function create($data = [])
     {
-        if (isset($data['currency'])) {
-            $data['currency_code'] = $data['currency'];
-            unset($data['currency']);
+        if (isset($data['transaction']['currency'])) {
+            $data['transaction']['currency_code'] = $data['transaction']['currency'];
+            unset($data['transaction']['currency']);
         }
-        if (isset($data['metadata'])) {
-            $data = array_merge($data, $data['metadata']);
-            unset($data['metadata']);
-        }
+        // if (isset($data['metadata'])) {
+        //     $data = array_merge($data, $data['metadata']);
+        //     unset($data['metadata']);
+        // }
         $requestData = array_merge($this->defaultData, $data);
         $this->GloballyPaid->setTransactionsBaseUrl('post');
         $chargeCallResponse = $this->GloballyPaid->charge($requestData);
