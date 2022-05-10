@@ -94,12 +94,44 @@ $GloballyPaid = new GloballyPaid($config);
 
 ```php
 $charge = $GloballyPaid->charges->create([
-    'amount' => 9.79 * 100, //amount with cents ex. 9.79 USD should be 9.79*100
-    'currency' => 'usd',
-    'source' => 'token_id_here', //check https://github.com/globallypaid/js-sdk-v2-sample/#form-events
-    'metadata' =>
-    [
-        'client_customer_id' => '123456' //your customer id
+    'source' => [ // the payment source object
+        'type' => 'card_on_file', // either card_on_file or credit_card
+        'card_on_file' => [
+            'id' => 'token_id_here', // required
+            'cvv' => '123', // optionally pass the CVV for user attended transactions
+        ]
+    ],
+    'transaction' => [ // the transaction object
+        'amount' => 9.79 * 100, // integer amount in the smallest currency unit, 979 = 9.79
+        'currency_code' => 'USD', // ISO 4217 currency code
+        'country_code' => 'USA', // ISO 3166 Alpha-3 country code
+        'capture' => false, // false = authorization only, true = sale
+        'avs' => true, // perform address verification
+        'cof_type' => 'UNSCHEDULED_CARDHOLDER', // one of UNSCHEDULED_CARDHOLDER | UNSCHEDULED_MERCHANT | RECURRING | INSTALLMENT
+        'kount_session_id' => 'session id',
+        'save_payment_instrument' => false // if true, will save the payment instrument in our vault. We will return a payment instrument id that can be used for future payments.
+
+    ]
+    'meta' => [ // the metadata object
+        'client_customer_id' => '123456', //your customer id
+        'client_transaction_id' => '987654', // your transaction id
+        'client_transaction_description' => 'Acme T-Shirt', // a short description for the transaction
+        'client_invoice_id' => 'INV-01293', // your invoice id
+        'shipping_info' => [ // shipping info for this transaction if available/applicable
+            'first_name' => 'John',
+            'last_name' => 'Doe',
+            'address' => [
+                'line_1' => '123 Any St',
+                'line_2' => 'Apt B',
+                'city' => 'Irvine',
+                'state' => 'CA',
+                'postal_code' => '92714',
+                'country_code' => 'USA'
+            ],
+            'phone' => '9495551212',
+            'email' => 'jdoe@nopmail.com'
+        ]
+
     ]
 ]);
 ```
@@ -111,11 +143,43 @@ The transaction amount doesn’t reach the merchant account until the funds are 
 ```php
 //charge request
 $charge = $GloballyPaid->charges->create([
-    'amount' => 2000,
-    'currency' => 'usd',
-    'source' => 'token_id_here',
-    'capture' => false,
-    'metadata' => ['client_customer_id' => '4445554']
+    'source' => [ 
+        'type' => 'card_on_file', 
+        'card_on_file' => [
+            'id' => 'token_id_here', 
+        ]
+    ],
+    'transaction' => [ 
+        'amount' => 9.79 * 100, 
+        'currency_code' => 'USD',
+        'country_code' => 'USA',
+        'capture' => false,
+        'avs' => true,
+        'cof_type' => 'UNSCHEDULED_CARDHOLDER', 
+        'kount_session_id' => 'session id',
+
+    ]
+    'meta' => [ 
+        'client_customer_id' => '123456', 
+        'client_transaction_id' => '987654',
+        'client_transaction_description' => 'Acme T-Shirt',
+        'client_invoice_id' => 'INV-01293',
+        'shipping_info' => [ 
+            'first_name' => 'John',
+            'last_name' => 'Doe',
+            'address' => [
+                'line_1' => '123 Any St',
+                'line_2' => 'Apt B',
+                'city' => 'Irvine',
+                'state' => 'CA',
+                'postal_code' => '92714',
+                'country_code' => 'USA'
+            ],
+            'phone' => '9495551212',
+            'email' => 'jdoe@nopmail.com'
+        ]
+
+    ]
 ]);
 
 //capture request
